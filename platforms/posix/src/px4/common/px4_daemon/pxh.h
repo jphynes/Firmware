@@ -84,9 +84,9 @@ private:
 	void _setup_term();
 	static void _restore_term();
 
-	bool _should_exit{false};
+	bool _should_exit;
 	History _history;
-	struct termios _orig_term {};
+	struct termios _orig_term;
 
 	static apps_map_type _apps;
 	static Pxh *_instance;

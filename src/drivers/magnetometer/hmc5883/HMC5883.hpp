@@ -158,7 +158,7 @@ private:
 
 	enum Rotation		_rotation;
 
-	sensor_mag_s	_last_report {};         /**< used for info() */
+	struct mag_report	_last_report {};         /**< used for info() */
 
 	uint8_t			_range_bits;
 	uint8_t			_conf_reg;

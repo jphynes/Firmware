@@ -8,7 +8,7 @@ import codecs
 import re
 import colorsys
 import json
-import sys
+
 
 
 parser = argparse.ArgumentParser(
@@ -367,7 +367,7 @@ class Graph(object):
             try:
                 content = f.read()
             except:
-                print('Failed reading file: %s, skipping content.' % file_name)
+                print('Failed reading file: %s, skipping content.' % path)
                 return
 
 
@@ -610,13 +610,11 @@ if args.output == 'json':
 elif args.output == 'graphviz':
     try:
         from graphviz import Digraph
-    except ImportError as e:
-        print("Failed to import graphviz: " + e)
+    except:
+        print("Failed to import graphviz.")
+        print("You may need to install it with 'pip install graphviz'")
         print("")
-        print("You may need to install it with:")
-        print("    pip3 install --user graphviz")
-        print("")
-        sys.exit(1)
+        raise
     output_graphviz = OutputGraphviz(graph)
     engine='fdp' # use neato or fdp
     output_graphviz.write(args.file+'.fv', engine=engine)

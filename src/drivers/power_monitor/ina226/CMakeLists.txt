@@ -36,9 +36,7 @@ px4_add_module(
 	COMPILE_FLAGS
 		-Wno-cast-align # TODO: fix and enable
 	SRCS
-		ina226_main.cpp
 		ina226.cpp
 	DEPENDS
-		battery
 		px4_work_queue
 	)

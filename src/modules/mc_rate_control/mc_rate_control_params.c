@@ -412,3 +412,4 @@ PARAM_DEFINE_INT32(MC_BAT_SCALE_EN, 0);
  * @group Multicopter Rate Control
  */
 PARAM_DEFINE_FLOAT(MC_DTERM_CUTOFF, 0.f);
+

@@ -105,12 +105,7 @@ public:
 	 */
 	inline T fetch_add(T num)
 	{
-#ifdef __PX4_QURT
-		// TODO: fix
-		return _value++;
-#else
 		return __atomic_fetch_add(&_value, num, __ATOMIC_SEQ_CST);
-#endif
 	}
 
 	/**

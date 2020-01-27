@@ -33,11 +33,17 @@
 
 #pragma once
 
+#include <drivers/device/i2c.h>
 #include <drivers/device/device.h>
-#include <lib/drivers/barometer/PX4Barometer.hpp>
+#include <drivers/device/ringbuffer.h>
+#include <drivers/device/spi.h>
+#include <drivers/drv_baro.h>
+#include <lib/cdev/CDev.hpp>
 #include <lib/perf/perf_counter.h>
+#include <px4_platform_common/getopt.h>
 #include <px4_platform_common/px4_work_queue/ScheduledWorkItem.hpp>
 #include <systemlib/err.h>
+#include <uORB/uORB.h>
 
 #include "ms5611.h"
 
@@ -83,14 +89,19 @@ enum MS56XX_DEVICE_TYPES {
  */
 #define MS5611_CONVERSION_INTERVAL	10000	/* microseconds */
 #define MS5611_MEASUREMENT_RATIO	3	/* pressure measurements per temperature measurement */
+#define MS5611_BARO_DEVICE_PATH_EXT	"/dev/ms5611_ext"
+#define MS5611_BARO_DEVICE_PATH_INT	"/dev/ms5611_int"
 
-class MS5611 : public px4::ScheduledWorkItem
+class MS5611 : public cdev::CDev, public px4::ScheduledWorkItem
 {
 public:
-	MS5611(device::Device *interface, ms5611::prom_u &prom_buf, enum MS56XX_DEVICE_TYPES device_type);
-	~MS5611() override;
+	MS5611(device::Device *interface, ms5611::prom_u &prom_buf, const char *path, enum MS56XX_DEVICE_TYPES device_type);
+	~MS5611();
 
-	int		init();
+	virtual int		init();
+
+	virtual ssize_t		read(cdev::file_t *filp, char *buffer, size_t buflen);
+	virtual int		ioctl(cdev::file_t *filp, int cmd, unsigned long arg);
 
 	/**
 	 * Diagnostics - print some basic information about the driver.
@@ -98,22 +109,27 @@ public:
 	void			print_info();
 
 protected:
-
-	PX4Barometer		_px4_barometer;
-
 	device::Device		*_interface;
 
 	ms5611::prom_s		_prom;
 
 	unsigned		_measure_interval{0};
 
+	ringbuffer::RingBuffer	*_reports;
 	enum MS56XX_DEVICE_TYPES _device_type;
-	bool			_collect_phase{false};
-	unsigned		_measure_phase{false};
+	bool			_collect_phase;
+	unsigned		_measure_phase;
 
 	/* intermediate temperature values per MS5611/MS5607 datasheet */
-	int64_t			_OFF{0};
-	int64_t			_SENS{0};
+	int32_t			_TEMP;
+	int64_t			_OFF;
+	int64_t			_SENS;
+	float			_P;
+	float			_T;
+
+	orb_advert_t		_baro_topic;
+	int			_orb_class_instance;
+	int			_class_instance;
 
 	perf_counter_t		_sample_perf;
 	perf_counter_t		_measure_perf;
@@ -152,10 +168,10 @@ protected:
 	 *
 	 * @return		OK if the measurement command was successful.
 	 */
-	int			measure();
+	virtual int		measure();
 
 	/**
 	 * Collect the result of the most recent measurement.
 	 */
-	int			collect();
+	virtual int		collect();
 };

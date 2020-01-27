@@ -48,6 +48,8 @@
 #include <fcntl.h>
 #include <errno.h>
 
+#include <arch/board/board.h>
+
 #include "tests_main.h"
 
 int test_sleep(int argc, char *argv[])

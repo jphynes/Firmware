@@ -132,8 +132,10 @@
 #include <px4_platform_common/time.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <poll.h>
 #include <fcntl.h>
 #include <math.h>
+#include <poll.h>
 #include <float.h>
 #include <mathlib/mathlib.h>
 #include <string.h>
@@ -178,7 +180,7 @@ typedef struct  {
 
 int do_accel_calibration(orb_advert_t *mavlink_log_pub)
 {
-#if 1 // TODO: replace all IOCTL usage
+#ifdef __PX4_NUTTX
 	int fd;
 #endif
 
@@ -198,7 +200,7 @@ int do_accel_calibration(orb_advert_t *mavlink_log_pub)
 
 	/* reset all sensors */
 	for (unsigned s = 0; s < max_accel_sens; s++) {
-#if 1 // TODO: replace all IOCTL usage
+#ifdef __PX4_NUTTX
 		sprintf(str, "%s%u", ACCEL_BASE_DEVICE_PATH, s);
 		/* reset all offsets to zero and all scales to one */
 		fd = px4_open(str, 0);
@@ -420,7 +422,7 @@ int do_accel_calibration(orb_advert_t *mavlink_log_pub)
 			return PX4_ERROR;
 		}
 
-#if 1 // TODO: replace all IOCTL usage
+#ifdef __PX4_NUTTX
 		sprintf(str, "%s%u", ACCEL_BASE_DEVICE_PATH, uorb_index);
 		fd = px4_open(str, 0);
 
@@ -523,7 +525,7 @@ calibrate_return do_accel_calibration_measurements(orb_advert_t *mavlink_log_pub
 			sensor_accel_s report = {};
 			orb_copy(ORB_ID(sensor_accel), worker_data.subs[cur_accel], &report);
 
-#if 1 // TODO: replace all IOCTL usage
+#ifdef __PX4_NUTTX
 
 			// For NuttX, we get the UNIQUE device ID from the sensor driver via an IOCTL
 			// and match it up with the one from the uORB subscription, because the

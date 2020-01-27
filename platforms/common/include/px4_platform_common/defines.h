@@ -54,6 +54,19 @@ constexpr bool PX4_ISFINITE(float x) { return __builtin_isfinite(x); }
 constexpr bool PX4_ISFINITE(double x) { return __builtin_isfinite(x); }
 #endif /* __cplusplus */
 
+#if defined(__PX4_NUTTX) || defined(__PX4_POSIX)
+/****************************************************************************
+ * Building for NuttX or POSIX.
+ ****************************************************************************/
+
+/* Main entry point */
+#define PX4_MAIN_FUNCTION(_prefix) int _prefix##_task_main(int argc, char *argv[])
+
+#else // defined(__PX4_NUTTX) || defined(__PX4_POSIX)
+/****************************************************************************/
+#error "No target OS defined"
+#endif
+
 #if defined(__PX4_NUTTX)
 /****************************************************************************
  * NuttX specific defines.
@@ -86,6 +99,9 @@ constexpr bool PX4_ISFINITE(double x) { return __builtin_isfinite(x); }
 // NuttX _IOC is equivalent to Linux _IO
 #define _PX4_IOC(x,y) _IO(x,y)
 
+/* FIXME - Used to satisfy build */
+#define getreg32(a)    (*(volatile uint32_t *)(a))
+
 #define USEC_PER_TICK (1000000/PX4_TICKS_PER_SEC)
 #define USEC2TICK(x) (((x)+(USEC_PER_TICK/2))/USEC_PER_TICK)
 
@@ -95,6 +111,7 @@ constexpr bool PX4_ISFINITE(double x) { return __builtin_isfinite(x); }
 #  include "dspal_math.h"
 #  define PX4_ROOTFSDIR "."
 #  define PX4_TICKS_PER_SEC 1000L
+#  define SIOCDEVPRIVATE 999999
 
 #else // __PX4_QURT
 
@@ -106,6 +123,8 @@ __END_DECLS
 
 #  if defined(__PX4_POSIX_EAGLE) || defined(__PX4_POSIX_EXCELSIOR)
 #    define PX4_ROOTFSDIR "/home/linaro"
+#  elif defined(__PX4_POSIX_BEBOP)
+#    define PX4_ROOTFSDIR "/data/ftp/internal_000/px4"
 #  else
 #    define PX4_ROOTFSDIR "."
 #  endif

@@ -11,12 +11,12 @@ Cm        = 0.05
 
 [[rotors]]
 name      = "front"
-position  = [1.0, 0.0, 0.0]
+position  = [-1.0, 0.0, 0.0]
 direction = "CW"
 
 [[rotors]]
 name      = "rear"
-position  = [-1.0, 0.0, 0.0]
+position  = [1.0, 0.0, 0.0]
 direction = "CW"
 
 [[rotors]]

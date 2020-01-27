@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#! /usr/bin/env python
 """ Script to generate Serial (UART) parameters and the ROMFS startup script """
 
 from __future__ import print_function
@@ -7,25 +7,15 @@ import argparse
 import os
 import sys
 
-try:
-    from jinja2 import Environment, FileSystemLoader
-except ImportError as e:
-    print("Failed to import jinja2: " + e)
-    print("")
-    print("You may need to install it using:")
-    print("    pip3 install --user jinja2")
-    print("")
-    sys.exit(1)
+from jinja2 import Environment, FileSystemLoader
 
 try:
     import yaml
-except ImportError as e:
-    print("Failed to import yaml: " + e)
+except:
+    print("Failed to import yaml.")
+    print("You may need to install it with 'sudo pip install pyyaml'")
     print("")
-    print("You may need to install it using:")
-    print("    pip3 install --user pyyaml")
-    print("")
-    sys.exit(1)
+    raise
 
 
 ## Configuration
@@ -115,11 +105,6 @@ serial_ports = {
     "GPS2": {
         "label": "GPS 2",
         "index": 202,
-        "default_baudrate": 0,
-        },
-    "GPS3": {
-        "label": "GPS 3",
-        "index": 203,
         "default_baudrate": 0,
         },
 

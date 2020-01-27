@@ -38,9 +38,9 @@ include_directories(${HEXAGON_8074_INCLUDES})
 
 set(QURT_LAYER_SRCS
 	px4_qurt_impl.cpp
-	tasks.cpp
+	px4_qurt_tasks.cpp
 	lib_crc32.c
-	drv_hrt.cpp
+	${PX4_SOURCE_DIR}/platforms/posix/src/px4/common/drv_hrt.cpp
 	qurt_stubs.c
 	main.cpp
 	shmem_qurt.cpp

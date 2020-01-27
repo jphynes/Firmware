@@ -54,3 +54,4 @@ int stm32h7_flash_writeprotect(size_t block, bool enabled);
 #define  stm32_flash_lock() stm32h7_flash_lock(PX4_FLASH_BASE)
 
 __END_DECLS
+

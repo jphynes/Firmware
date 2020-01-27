@@ -42,7 +42,7 @@
 
 #include "../CDev.hpp"
 
-#include <nuttx/i2c/i2c_master.h>
+#include <px4_platform_common/i2c.h>
 
 #if !defined(CONFIG_I2C)
 #  error I2C support requires CONFIG_I2C
@@ -113,7 +113,7 @@ protected:
 
 private:
 	uint32_t		_frequency{0};
-	i2c_master_s		*_dev{nullptr};
+	px4_i2c_dev_t		*_dev{nullptr};
 
 };
 

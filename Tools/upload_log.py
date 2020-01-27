@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 """
 Upload an ULog file to the logs.px4.io web server.
@@ -10,19 +10,17 @@ Upload an ULog file to the logs.px4.io web server.
 from __future__ import print_function
 
 from argparse import ArgumentParser
-from six.moves import input
 import subprocess
 import sys
 
+
 try:
     import requests
-except ImportError as e:
-    print("Failed to import requests: " + e)
+except:
+    print("Failed to import requests.")
+    print("You may need to install it with 'pip install requests'")
     print("")
-    print("You may need to install it using:")
-    print("    pip3 install --user requests")
-    print("")
-    sys.exit(1)
+    raise
 
 
 SERVER = 'https://logs.px4.io'
@@ -40,7 +38,12 @@ def ask_value(text, default=None):
     if default != None:
         ask_string += ' (Press ENTER to use ' + default + ')'
     ask_string += ': '
-    ret = input(ask_string).strip()
+
+    if sys.version_info[0] < 3:
+        ret = raw_input(ask_string)
+    else:
+        ret = input(ask_string)
+
     if ret == "" and default != None:
         return default
     return ret

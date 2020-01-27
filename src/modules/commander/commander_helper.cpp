@@ -63,6 +63,9 @@
 #include <drivers/drv_tone_alarm.h>
 
 #include "commander_helper.h"
+#include "DevMgr.hpp"
+
+using namespace DriverFramework;
 
 #define VEHICLE_TYPE_FIXED_WING 1
 #define VEHICLE_TYPE_QUADROTOR 2
@@ -128,8 +131,8 @@ static hrt_abstime tune_end = 0; // end time of currently played tune, 0 for rep
 static int tune_current = TONE_STOP_TUNE; // currently playing tune, can be interrupted after tune_end
 static unsigned int tune_durations[TONE_NUMBER_OF_TUNES] {};
 
-static int fd_leds{-1};
-
+static DevHandle h_leds;
+static DevHandle h_buzzer;
 static led_control_s led_control {};
 static orb_advert_t led_control_pub = nullptr;
 static tune_control_s tune_control {};
@@ -293,25 +296,25 @@ int led_init()
 	led_control_pub = orb_advertise_queue(ORB_ID(led_control), &led_control, led_control_s::ORB_QUEUE_LENGTH);
 
 	/* first open normal LEDs */
-	fd_leds = px4_open(LED0_DEVICE_PATH, O_RDWR);
+	DevMgr::getHandle(LED0_DEVICE_PATH, h_leds);
 
-	if (fd_leds < 0) {
-		PX4_ERR("LED: open %s failed", LED0_DEVICE_PATH);
+	if (!h_leds.isValid()) {
+		PX4_WARN("LED: getHandle fail\n");
 		return PX4_ERROR;
 	}
 
 	/* the green LED is only available on FMUv5 */
-	px4_ioctl(fd_leds, LED_ON, LED_GREEN);
+	(void)h_leds.ioctl(LED_ON, LED_GREEN);
 
 	/* the blue LED is only available on AeroCore but not FMUv2 */
-	px4_ioctl(fd_leds, LED_ON, LED_BLUE);
+	(void)h_leds.ioctl(LED_ON, LED_BLUE);
 
 	/* switch blue off */
 	led_off(LED_BLUE);
 
 	/* we consider the amber led mandatory */
-	if (px4_ioctl(fd_leds, LED_ON, LED_AMBER)) {
-		PX4_WARN("Amber LED: ioctl fail");
+	if (h_leds.ioctl(LED_ON, LED_AMBER)) {
+		PX4_WARN("Amber LED: ioctl fail\n");
 		return PX4_ERROR;
 	}
 
@@ -324,22 +327,22 @@ int led_init()
 void led_deinit()
 {
 	orb_unadvertise(led_control_pub);
-	px4_close(fd_leds);
+	DevMgr::releaseHandle(h_leds);
 }
 
 int led_toggle(int led)
 {
-	return px4_ioctl(fd_leds, LED_TOGGLE, led);
+	return h_leds.ioctl(LED_TOGGLE, led);
 }
 
 int led_on(int led)
 {
-	return px4_ioctl(fd_leds, LED_ON, led);
+	return h_leds.ioctl(LED_ON, led);
 }
 
 int led_off(int led)
 {
-	return px4_ioctl(fd_leds, LED_OFF, led);
+	return h_leds.ioctl(LED_OFF, led);
 }
 
 void rgbled_set_color_and_mode(uint8_t color, uint8_t mode, uint8_t blinks, uint8_t prio)

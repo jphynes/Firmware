@@ -135,7 +135,7 @@ void test(bool external_bus)
 {
 	int fd = -1;
 	const char *path = (external_bus ? BMM150_DEVICE_PATH_MAG_EXT : BMM150_DEVICE_PATH_MAG);
-	sensor_mag_s m_report;
+	struct mag_report m_report;
 	ssize_t sz;
 
 
@@ -338,7 +338,7 @@ int BMM150::init()
 	}
 
 	/* allocate basic report buffers */
-	_reports = new ringbuffer::RingBuffer(2, sizeof(sensor_mag_s));
+	_reports = new ringbuffer::RingBuffer(2, sizeof(mag_report));
 
 	if (_reports == nullptr) {
 		goto out;
@@ -374,7 +374,7 @@ int BMM150::init()
 	}
 
 	/* advertise sensor topic, measure manually to initialize valid report */
-	sensor_mag_s mrb;
+	struct mag_report mrb;
 	_reports->get(&mrb);
 
 	/* measurement will have generated a report, publish */
@@ -425,8 +425,8 @@ BMM150::stop()
 ssize_t
 BMM150::read(struct file *filp, char *buffer, size_t buflen)
 {
-	unsigned count = buflen / sizeof(sensor_mag_s);
-	sensor_mag_s *mag_buf = reinterpret_cast<sensor_mag_s *>(buffer);
+	unsigned count = buflen / sizeof(mag_report);
+	struct mag_report *mag_buf = reinterpret_cast<struct mag_report *>(buffer);
 	int ret = 0;
 
 	/* buffer must be large enough */
@@ -443,7 +443,7 @@ BMM150::read(struct file *filp, char *buffer, size_t buflen)
 		 */
 		while (count--) {
 			if (_reports->get(mag_buf)) {
-				ret += sizeof(sensor_mag_s);
+				ret += sizeof(struct mag_report);
 				mag_buf++;
 			}
 		}
@@ -474,7 +474,7 @@ BMM150::read(struct file *filp, char *buffer, size_t buflen)
 
 
 		if (_reports->get(mag_buf)) {
-			ret = sizeof(sensor_mag_s);
+			ret = sizeof(struct mag_report);
 		}
 	} while (0);
 
@@ -540,7 +540,7 @@ BMM150::collect()
 	bool mag_notify = true;
 	uint8_t mag_data[8], status;
 	uint16_t resistance, lsb, msb, msblsb;
-	sensor_mag_s mrb{};
+	mag_report  mrb;
 
 
 	/* start collecting data */

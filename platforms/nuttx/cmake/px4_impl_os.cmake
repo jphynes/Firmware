@@ -69,6 +69,7 @@ function(px4_os_add_flags)
 
 	add_definitions(
 		-D__PX4_NUTTX
+		-D__DF_NUTTX
 
 		-D_SYS_CDEFS_H_ # skip toolchain's <sys/cdefs.h>
 		-D_SYS_REENT_H_	# skip toolchain's <sys/reent.h>
@@ -77,11 +78,9 @@ function(px4_os_add_flags)
 	if("${CONFIG_ARMV7M_STACKCHECK}" STREQUAL "y")
 		message(STATUS "NuttX Stack Checking (CONFIG_ARMV7M_STACKCHECK) enabled")
 		add_compile_options(
-			-ffixed-r10
 			-finstrument-functions
-			# instrumenting PX4 Matrix and Param methods is too burdensome
-			-finstrument-functions-exclude-file-list=matrix/Matrix.hpp,px4_platform_common/param.h
-		)
+			-ffixed-r10
+			)
 	endif()
 
 endfunction()

@@ -48,6 +48,8 @@
 #include <fcntl.h>
 #include <errno.h>
 
+#include <arch/board/board.h>
+
 #include <drivers/drv_board_led.h>
 
 #include "tests_main.h"

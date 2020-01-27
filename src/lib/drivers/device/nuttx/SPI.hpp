@@ -42,8 +42,6 @@
 
 #include "../CDev.hpp"
 
-#include <nuttx/spi/spi.h>
-
 namespace device __EXPORT
 {
 

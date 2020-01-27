@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 """
 Open a shell over MAVLink.
@@ -11,27 +11,16 @@ from __future__ import print_function
 import sys, select
 import termios
 from timeit import default_timer as timer
-from argparse import ArgumentParser
 
 try:
     from pymavlink import mavutil
-except ImportError as e:
-    print("Failed to import pymavlink: " + e)
-    print("")
-    print("You may need to install it with:")
-    print("    pip3 install --user pymavlink")
-    print("")
-    sys.exit(1)
-
-try:
     import serial
-except ImportError as e:
-    print("Failed to import pyserial: " + e)
+except:
+    print("Failed to import pymavlink.")
+    print("You may need to install it with 'pip install pymavlink pyserial'")
     print("")
-    print("You may need to install it with:")
-    print("    pip3 install --user pyserial")
-    print("")
-    sys.exit(1)
+    raise
+from argparse import ArgumentParser
 
 
 class MavlinkSerialPort():

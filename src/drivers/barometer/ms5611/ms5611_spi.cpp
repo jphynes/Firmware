@@ -37,7 +37,6 @@
  * SPI interface for MS5611
  */
 
-#include <drivers/device/spi.h>
 #include "ms5611.h"
 
 /* SPI protocol address bits */
@@ -46,6 +45,8 @@
 #define ADDR_INCREMENT			(1<<6)
 
 #if defined(PX4_SPIDEV_BARO) || defined(PX4_SPIDEV_EXT_BARO)
+
+device::Device *MS5611_spi_interface(ms5611::prom_u &prom_buf, bool external_bus);
 
 class MS5611_SPI : public device::SPI
 {

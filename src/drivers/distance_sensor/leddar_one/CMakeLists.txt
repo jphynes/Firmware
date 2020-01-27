@@ -1,6 +1,6 @@
 ############################################################################
 #
-#   Copyright (C) 2017-2019 Intel Corporation. All rights reserved.
+#   Copyright (C) 2017  Intel Corporation. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -31,14 +31,12 @@
 #
 ############################################################################
 px4_add_module(
-	MODULE drivers__distance_sensor__leddar_one
+	MODULE drivers__leddar_one
 	MAIN leddar_one
 	COMPILE_FLAGS
 		-Wno-cast-align # TODO: fix and enable
 	SRCS
-		LeddarOne.cpp
-		LeddarOne.hpp
-		leddar_one_main.cpp
+		leddar_one.cpp
 	MODULE_CONFIG
 		module.yaml
 	)

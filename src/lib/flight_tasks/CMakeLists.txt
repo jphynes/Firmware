@@ -58,6 +58,7 @@ list(APPEND flight_tasks_all
 	ManualPositionSmooth
 	ManualPositionSmoothVel
 	Sport
+	AutoLine
 	AutoLineSmoothVel
 	AutoFollowMe
 	Offboard

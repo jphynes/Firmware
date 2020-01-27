@@ -48,6 +48,7 @@
 #include <errno.h>
 #include <time.h>
 
+#include <arch/board/board.h>
 #include <drivers/drv_pwm_output.h>
 #include <systemlib/err.h>
 

@@ -33,6 +33,7 @@
 
 set(SRCS
     stub_daemon.cpp
+    stub_devmgr.cpp
     stub_parameter.cpp
    )
 

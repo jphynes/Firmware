@@ -42,6 +42,7 @@
 #include <matrix/matrix/math.hpp>
 #include <uORB/topics/vehicle_attitude_setpoint.h>
 #include <uORB/topics/vehicle_constraints.h>
+#include <uORB/topics/vehicle_local_position.h>
 #include <uORB/topics/vehicle_local_position_setpoint.h>
 
 struct PositionControlStates {
@@ -120,25 +121,23 @@ public:
 	void setHoverThrust(const float thrust) { _hover_thrust = thrust; }
 
 	/**
-	 * Pass the current vehicle state to the controller
+	 * Update the current vehicle state.
 	 * @param PositionControlStates structure
 	 */
-	void setState(const PositionControlStates &states);
+	void updateState(const PositionControlStates &states);
 
 	/**
-	 * Pass the desired setpoints
-	 * Note: NAN value means no feed forward/leave state uncontrolled if there's no higher order setpoint.
+	 * Update the desired setpoints.
 	 * @param setpoint a vehicle_local_position_setpoint_s structure
-	 * @return true if a valid setpoint was set
+	 * @return true if setpoint has updated correctly
 	 */
-	bool setInputSetpoint(const vehicle_local_position_setpoint_s &setpoint);
+	bool updateSetpoint(const vehicle_local_position_setpoint_s &setpoint);
 
 	/**
-	 * Pass constraints that are stricter than the global limits
-	 * Note: NAN value means no constraint, take maximum limit of controller.
+	 * Set constraints that are stricter than the global limits.
 	 * @param constraints a PositionControl structure with supported constraints
 	 */
-	void setConstraints(const vehicle_constraints_s &constraints);
+	void updateConstraints(const vehicle_constraints_s &constraints);
 
 	/**
 	 * Apply P-position and PID-velocity controller that updates the member
@@ -146,16 +145,42 @@ public:
 	 * @see _thr_sp
 	 * @see _yaw_sp
 	 * @see _yawspeed_sp
-	 * @param dt time in seconds since last iteration
-	 * @return true if output setpoint is executable, false if not
+	 * @param dt the delta-time
 	 */
-	void update(const float dt);
+	void generateThrustYawSetpoint(const float dt);
 
 	/**
-	 * Set the integral term in xy to 0.
-	 * @see _vel_int
+	 * 	Set the integral term in xy to 0.
+	 * 	@see _thr_int
 	 */
-	void resetIntegral() { _vel_int.setZero(); }
+	void resetIntegralXY() { _thr_int(0) = _thr_int(1) = 0.f; }
+
+	/**
+	 * 	Set the integral term in z to 0.
+	 * 	@see _thr_int
+	 */
+	void resetIntegralZ() { _thr_int(2) = 0.f; }
+
+	/**
+	 * 	Get the
+	 * 	@see _vel_sp
+	 * 	@return The velocity set-point that was executed in the control-loop. Nan if velocity control-loop was skipped.
+	 */
+	const matrix::Vector3f getVelSp() const
+	{
+		matrix::Vector3f vel_sp{};
+
+		for (int i = 0; i <= 2; i++) {
+			if (_ctrl_vel[i]) {
+				vel_sp(i) = _vel_sp(i);
+
+			} else {
+				vel_sp(i) = NAN;
+			}
+		}
+
+		return vel_sp;
+	}
 
 	/**
 	 * Get the controllers output local position setpoint
@@ -180,8 +205,9 @@ private:
 	 */
 	bool _interfaceMapping();
 
-	void _positionControl(); ///< Position proportional control
-	void _velocityControl(const float dt); ///< Velocity PID control
+	void _positionController(); /** applies the P-position-controller */
+	void _velocityController(const float &dt); /** applies the PID-velocity-controller */
+	void _setCtrlFlag(bool value); /**< set control-loop flags (only required for logging) */
 
 	// Gains
 	matrix::Vector3f _gain_pos_p; ///< Position control proportional gain
@@ -203,7 +229,7 @@ private:
 	matrix::Vector3f _pos; /**< current position */
 	matrix::Vector3f _vel; /**< current velocity */
 	matrix::Vector3f _vel_dot; /**< velocity derivative (replacement for acceleration estimate) */
-	matrix::Vector3f _vel_int; /**< integral term of the velocity controller */
+	matrix::Vector3f _thr_int; /**< integral term of the velocity controller */
 	float _yaw{}; /**< current heading */
 
 	vehicle_constraints_s _constraints{}; /**< variable constraints */
@@ -217,4 +243,6 @@ private:
 	float _yawspeed_sp{}; /** desired yaw-speed */
 
 	bool _skip_controller{false}; /**< skips position/velocity controller. true for stabilized mode */
+	bool _ctrl_pos[3] = {true, true, true}; /**< True if the control-loop for position was used */
+	bool _ctrl_vel[3] = {true, true, true}; /**< True if the control-loop for velocity was used */
 };

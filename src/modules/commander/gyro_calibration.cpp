@@ -49,6 +49,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <poll.h>
 #include <math.h>
 #include <mathlib/mathlib.h>
 #include <string.h>
@@ -239,7 +240,7 @@ int do_gyro_calibration(orb_advert_t *mavlink_log_pub)
 
 		// Reset all offsets to 0
 		(void)memcpy(&worker_data.gyro_scale[s], &gyro_scale_zero, sizeof(gyro_scale_zero));
-#if 1 // TODO: replace all IOCTL usage
+#ifdef __PX4_NUTTX
 		sprintf(str, "%s%u", GYRO_BASE_DEVICE_PATH, s);
 		int fd = px4_open(str, 0);
 
@@ -300,7 +301,7 @@ int do_gyro_calibration(orb_advert_t *mavlink_log_pub)
 			sensor_gyro_s report{};
 			orb_copy(ORB_ID(sensor_gyro), worker_data.gyro_sensor_sub[cur_gyro], &report);
 
-#if 1 // TODO: replace all IOCTL usage
+#ifdef __PX4_NUTTX
 
 			// For NuttX, we get the UNIQUE device ID from the sensor driver via an IOCTL
 			// and match it up with the one from the uORB subscription, because the
@@ -472,7 +473,7 @@ int do_gyro_calibration(orb_advert_t *mavlink_log_pub)
 				(void)sprintf(str, "CAL_GYRO%u_ID", uorb_index);
 				failed |= (PX4_OK != param_set_no_notification(param_find(str), &(worker_data.device_id[uorb_index])));
 
-#if 1 // TODO: replace all IOCTL usage
+#ifdef __PX4_NUTTX
 				/* apply new scaling and offsets */
 				(void)sprintf(str, "%s%u", GYRO_BASE_DEVICE_PATH, uorb_index);
 				int fd = px4_open(str, 0);

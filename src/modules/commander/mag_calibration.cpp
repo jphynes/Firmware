@@ -49,6 +49,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <poll.h>
 #include <math.h>
 #include <fcntl.h>
 #include <drivers/drv_hrt.h>
@@ -152,7 +153,7 @@ int do_mag_calibration(orb_advert_t *mavlink_log_pub)
 	(void)append_to_existing_calibration;
 
 	for (unsigned cur_mag = 0; cur_mag < max_mags; cur_mag++) {
-#if 1 // TODO: replace all IOCTL usage
+#ifdef __PX4_NUTTX
 		// Reset mag id to mag not available
 		(void)sprintf(str, "CAL_MAG%u_ID", cur_mag);
 		result = param_set_no_notification(param_find(str), &(device_ids[cur_mag]));
@@ -209,7 +210,7 @@ int do_mag_calibration(orb_advert_t *mavlink_log_pub)
 
 		param_notify_changes();
 
-#if 1 // TODO: replace all IOCTL usage
+#ifdef __PX4_NUTTX
 		// Attempt to open mag
 		(void)sprintf(str, "%s%u", MAG_BASE_DEVICE_PATH, cur_mag);
 		int fd = px4_open(str, O_RDONLY);
@@ -461,7 +462,7 @@ static calibrate_return mag_calibration_worker(detect_orientation_return orienta
 				prev_count[cur_mag] = worker_data->calibration_counter_total[cur_mag];
 
 				if (worker_data->sub_mag[cur_mag] >= 0) {
-					sensor_mag_s mag{};
+					struct mag_report mag;
 
 					orb_copy(ORB_ID(sensor_mag), worker_data->sub_mag[cur_mag], &mag);
 
@@ -605,10 +606,10 @@ calibrate_return mag_calibrate_all(orb_advert_t *mavlink_log_pub, int32_t cal_ma
 			for (unsigned i = 0; i < orb_mag_count && !found_cur_mag; i++) {
 				worker_data.sub_mag[cur_mag] = orb_subscribe_multi(ORB_ID(sensor_mag), i);
 
-				sensor_mag_s report{};
+				struct mag_report report;
 				orb_copy(ORB_ID(sensor_mag), worker_data.sub_mag[cur_mag], &report);
 
-#if 1 // TODO: replace all IOCTL usage
+#ifdef __PX4_NUTTX
 
 				// For NuttX, we get the UNIQUE device ID from the sensor driver via an IOCTL
 				// and match it up with the one from the uORB subscription, because the
@@ -803,7 +804,7 @@ calibrate_return mag_calibrate_all(orb_advert_t *mavlink_log_pub, int32_t cal_ma
 			if (device_ids[cur_mag] != 0) {
 				mag_calibration_s mscale;
 
-#if 1 // TODO: replace all IOCTL usage
+#ifdef __PX4_NUTTX
 				int fd_mag = -1;
 
 				(void)sprintf(str, "%s%u", MAG_BASE_DEVICE_PATH, cur_mag);
@@ -818,7 +819,7 @@ calibrate_return mag_calibrate_all(orb_advert_t *mavlink_log_pub, int32_t cal_ma
 
 				if (result == calibrate_return_ok) {
 
-#if 1 // TODO: replace all IOCTL usage
+#ifdef __PX4_NUTTX
 
 					// Read existing calibration
 					if (px4_ioctl(fd_mag, MAGIOCGSCALE, (long unsigned int)&mscale) != PX4_OK) {
@@ -851,7 +852,7 @@ calibrate_return mag_calibrate_all(orb_advert_t *mavlink_log_pub, int32_t cal_ma
 #endif
 				}
 
-#if 1 // TODO: replace all IOCTL usage
+#ifdef __PX4_NUTTX
 
 				// Mag device no longer needed
 				if (fd_mag >= 0) {
@@ -874,12 +875,15 @@ calibrate_return mag_calibrate_all(orb_advert_t *mavlink_log_pub, int32_t cal_ma
 					(void)sprintf(str, "CAL_MAG%u_ZOFF", cur_mag);
 					failed |= (PX4_OK != param_set_no_notification(param_find(str), &(mscale.z_offset)));
 
+					// FIXME: scaling is not used right now on QURT
+#ifndef __PX4_QURT
 					(void)sprintf(str, "CAL_MAG%u_XSCALE", cur_mag);
 					failed |= (PX4_OK != param_set_no_notification(param_find(str), &(mscale.x_scale)));
 					(void)sprintf(str, "CAL_MAG%u_YSCALE", cur_mag);
 					failed |= (PX4_OK != param_set_no_notification(param_find(str), &(mscale.y_scale)));
 					(void)sprintf(str, "CAL_MAG%u_ZSCALE", cur_mag);
 					failed |= (PX4_OK != param_set_no_notification(param_find(str), &(mscale.z_scale)));
+#endif
 
 					if (failed) {
 						calibration_log_critical(mavlink_log_pub, CAL_ERROR_SET_PARAMS_MSG);
@@ -888,10 +892,10 @@ calibrate_return mag_calibrate_all(orb_advert_t *mavlink_log_pub, int32_t cal_ma
 					} else {
 						calibration_log_info(mavlink_log_pub, "[cal] mag #%u off: x:%.2f y:%.2f z:%.2f Ga",
 								     cur_mag, (double)mscale.x_offset, (double)mscale.y_offset, (double)mscale.z_offset);
-
+#ifndef __PX4_QURT
 						calibration_log_info(mavlink_log_pub, "[cal] mag #%u scale: x:%.2f y:%.2f z:%.2f",
 								     cur_mag, (double)mscale.x_scale, (double)mscale.y_scale, (double)mscale.z_scale);
-
+#endif
 						px4_usleep(200000);
 					}
 				}

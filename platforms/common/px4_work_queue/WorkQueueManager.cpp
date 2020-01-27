@@ -264,14 +264,8 @@ WorkQueueManagerRun(int, char **)
 			}
 
 #ifndef __PX4_QURT
-
 			// schedule policy FIFO
-
-#if defined(ENABLE_LOCKSTEP_SCHEDULER)
-			int ret_setschedpolicy = pthread_attr_setschedpolicy(&attr, SCHED_RR);
-#else
 			int ret_setschedpolicy = pthread_attr_setschedpolicy(&attr, SCHED_FIFO);
-#endif
 
 			if (ret_setschedpolicy != 0) {
 				PX4_ERR("failed to set sched policy SCHED_FIFO (%i)", ret_setschedpolicy);
@@ -319,7 +313,7 @@ WorkQueueManagerStart()
 
 		int task_id = px4_task_spawn_cmd("wq:manager",
 						 SCHED_DEFAULT,
-						 SCHED_PRIORITY_MAX,
+						 PX4_WQ_HP_BASE,
 						 1280,
 						 (px4_main_t)&WorkQueueManagerRun,
 						 nullptr);

@@ -132,11 +132,6 @@ extern "C" __EXPORT int ism330dlc_main(int argc, char *argv[])
 		}
 	}
 
-	if (myoptind >= argc) {
-		ism330dlc::usage();
-		return -1;
-	}
-
 	const char *verb = argv[myoptind];
 
 	if (!strcmp(verb, "start")) {

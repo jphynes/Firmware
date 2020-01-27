@@ -59,7 +59,6 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <sys/stat.h>
-#include <sys/file.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -71,6 +70,7 @@
 #include <px4_platform_common/posix.h>
 
 #include "apps.h"
+#include "DriverFramework.hpp"
 #include "px4_daemon/client.h"
 #include "px4_daemon/server.h"
 #include "px4_daemon/pxh.h"
@@ -102,7 +102,7 @@ static int create_dirs();
 static int run_startup_script(const std::string &commands_file, const std::string &absolute_binary_path, int instance);
 static std::string get_absolute_binary_path(const std::string &argv0);
 static void wait_to_exit();
-static bool is_server_running(int instance, bool server);
+static bool is_already_running(int instance);
 static void print_usage();
 static bool dir_exists(const std::string &path);
 static bool file_exists(const std::string &name);
@@ -142,6 +142,7 @@ int main(int argc, char **argv)
 		absolute_binary_path = get_absolute_binary_path(full_binary_name);
 	}
 
+
 	if (is_client) {
 		int instance = 0;
 
@@ -157,7 +158,7 @@ int main(int argc, char **argv)
 
 		PX4_DEBUG("instance: %i", instance);
 
-		if (!is_server_running(instance, false)) {
+		if (!is_already_running(instance)) {
 			if (errno) {
 				PX4_ERR("Failed to communicate with daemon: %s", strerror(errno));
 
@@ -239,7 +240,7 @@ int main(int argc, char **argv)
 			} // else: ROS argument (in the form __<name>:=<value>)
 		}
 
-		if (is_server_running(instance, true)) {
+		if (is_already_running(instance)) {
 			// allow running multiple instances, but the server is only started for the first
 			PX4_INFO("PX4 daemon already running for instance %i (%s)", instance, strerror(errno));
 			return -1;
@@ -280,14 +281,12 @@ int main(int argc, char **argv)
 			return ret;
 		}
 
+		DriverFramework::Framework::initialize();
+
 		px4::init_once();
 		px4::init(argc, argv, "px4");
 
 		ret = run_startup_script(commands_file, absolute_binary_path, instance);
-
-		if (ret != 0) {
-			return PX4_ERROR;
-		}
 
 		// We now block here until we need to exit.
 		if (pxh_off) {
@@ -422,7 +421,7 @@ void register_sig_handler()
 	sigaction(SIGINT, &sig_int, nullptr);
 #endif
 
-	sigaction(SIGTERM, &sig_int, nullptr);
+	//sigaction(SIGTERM, &sig_int, nullptr);
 	sigaction(SIGFPE, &sig_fpe, nullptr);
 	sigaction(SIGPIPE, &sig_pipe, nullptr);
 }
@@ -430,7 +429,7 @@ void register_sig_handler()
 void sig_int_handler(int sig_num)
 {
 	fflush(stdout);
-	printf("\nPX4 Exiting...\n");
+	printf("\nExiting...\n");
 	fflush(stdout);
 	px4_daemon::Pxh::stop();
 	_exit_requested = true;
@@ -549,8 +548,7 @@ int run_startup_script(const std::string &commands_file, const std::string &abso
 void wait_to_exit()
 {
 	while (!_exit_requested) {
-		// needs to be a regular sleep not dependant on lockstep (not px4_usleep)
-		usleep(100000);
+		px4_usleep(100000);
 	}
 }
 
@@ -574,39 +572,29 @@ void print_usage()
 	printf("        e.g.: px4-commander status\n");
 }
 
-bool is_server_running(int instance, bool server)
+bool is_already_running(int instance)
 {
 	const std::string file_lock_path = std::string(LOCK_FILE_PATH) + '-' + std::to_string(instance);
+	struct flock fl;
 	int fd = open(file_lock_path.c_str(), O_RDWR | O_CREAT, 0666);
 
 	if (fd < 0) {
-		PX4_ERR("is_server_running: failed to create lock file: %s, reason=%s", file_lock_path.c_str(), strerror(errno));
 		return false;
 	}
 
-	bool result = false;
+	fl.l_type   = F_WRLCK;
+	fl.l_whence = SEEK_SET;
+	fl.l_start  = 0;
+	fl.l_len    = 0;
+	fl.l_pid    = getpid();
 
-	// Server is running if the file is already locked.
-	if (flock(fd, LOCK_EX | LOCK_NB) < 0) {
-		if (errno == EWOULDBLOCK) {
-			// a server is running!
-			result = true;
-
-		} else {
-			PX4_ERR("is_server_running: failed to get lock on file: %s, reason=%s", file_lock_path.c_str(), strerror(errno));
-			result = false;
-		}
+	if (fcntl(fd, F_SETLK, &fl) == -1) {
+		// We failed to create a file lock, must be already locked.
+		return errno == EACCES || errno == EAGAIN;
 	}
-
-	if (result || !server) {
-		close(fd);
-	}
-
-	// note: server leaks the file handle once, on purpose, in order to keep the lock on the file until the process terminates.
-	// In this case we return false so the server code path continues now that we have the lock.
 
 	errno = 0;
-	return result;
+	return false;
 }
 
 bool file_exists(const std::string &name)

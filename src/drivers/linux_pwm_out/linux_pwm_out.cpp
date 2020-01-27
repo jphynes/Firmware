@@ -113,7 +113,7 @@ static void start();
 
 static void stop();
 
-static int task_main_trampoline(int argc, char *argv[]);
+static void task_main_trampoline(int argc, char *argv[]);
 
 static void subscribe();
 
@@ -235,7 +235,7 @@ void task_main(int argc, char *argv[])
 		PX4_INFO("Starting PWM output in ocpoc_mmap mode");
 		pwm_out = new OcpocMmapPWMOut(_max_num_outputs);
 
-#ifdef CONFIG_ARCH_BOARD_BEAGLEBONE_BLUE
+#ifdef __DF_BBBLUE
 
 	} else if (strcmp(_protocol, "bbblue_rc") == 0) {
 		PX4_INFO("Starting PWM output in bbblue_rc mode");
@@ -452,10 +452,9 @@ void task_main(int argc, char *argv[])
 
 }
 
-int task_main_trampoline(int argc, char *argv[])
+void task_main_trampoline(int argc, char *argv[])
 {
 	task_main(argc, argv);
-	return 0;
 }
 
 void start()
@@ -527,15 +526,15 @@ int linux_pwm_out_main(int argc, char *argv[])
 	while ((ch = px4_getopt(argc, argv, "d:m:p:n:", &myoptind, &myoptarg)) != EOF) {
 		switch (ch) {
 		case 'd':
-			strncpy(linux_pwm_out::_device, myoptarg, sizeof(linux_pwm_out::_device) - 1);
+			strncpy(linux_pwm_out::_device, myoptarg, sizeof(linux_pwm_out::_device));
 			break;
 
 		case 'm':
-			strncpy(linux_pwm_out::_mixer_filename, myoptarg, sizeof(linux_pwm_out::_mixer_filename) - 1);
+			strncpy(linux_pwm_out::_mixer_filename, myoptarg, sizeof(linux_pwm_out::_mixer_filename));
 			break;
 
 		case 'p':
-			strncpy(linux_pwm_out::_protocol, myoptarg, sizeof(linux_pwm_out::_protocol) - 1);
+			strncpy(linux_pwm_out::_protocol, myoptarg, sizeof(linux_pwm_out::_protocol));
 			break;
 
 		case 'n': {

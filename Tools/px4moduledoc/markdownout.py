@@ -1,4 +1,3 @@
-#! /usr/bin/env python3
 """
 Class to generate Markdown documentation pages from parsed module doc strings
 """

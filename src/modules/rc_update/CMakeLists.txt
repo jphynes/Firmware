@@ -36,8 +36,7 @@ px4_add_module(
 	MAIN rc_update
 	SRCS
 		rc_update.cpp
-		rc_update.h
+		parameters.cpp
 	DEPENDS
 		mathlib
-		px4_work_queue
 	)

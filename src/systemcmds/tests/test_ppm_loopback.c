@@ -47,6 +47,7 @@
 #include <fcntl.h>
 #include <errno.h>
 
+#include <arch/board/board.h>
 #include <drivers/drv_pwm_output.h>
 #include <drivers/drv_rc_input.h>
 #include <uORB/topics/rc_channels.h>

@@ -182,3 +182,4 @@ private:
 	matrix::Vector3f _acro_rate_max;	/**< max attitude rates in acro mode */
 
 };
+
