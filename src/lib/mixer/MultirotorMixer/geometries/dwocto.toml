@@ -1,0 +1,53 @@
+# DWOctacopter in + configuration
+
+
+
+
+[info]
+key = "8dw"
+description = "doublewide Octacopter"
+
+[rotor_default]
+axis      = [0.0, 0.0, -1.0]
+Ct        = 1.0
+Cm        = 0.05
+
+[[rotors]]
+name      = "ffl"
+position  = [0.8, -0.2375, 0.0]
+direction = "CW"
+
+[[rotors]]
+name      = "ffr"
+position  = [1.0, 0.2375, 0.0]
+direction = "CCW"
+
+[[rotors]]
+name      = "mfl"
+position  = [0.25, -0.2375, 0.0]
+direction = "CW"
+
+[[rotors]]
+name      = "mfr"
+position  = [0.45, 0.2375, 0.0]
+direction = "CCW"
+
+[[rotors]]
+name      = "mrl"
+position  = [-0.525, -0.2375, 0.0]
+direction = "CCW"
+
+[[rotors]]
+name      = "mrr"
+position  = [-0.275, 0.2375, 0.0]
+direction = "CW"
+
+[[rotors]]
+name      = "rrl"
+position  = [-1.0, -0.2375, 0.0]
+direction = "CCW"
+
+[[rotors]]
+name      = "rrr"
+position  = [-0.8, 0.2375, 0.0]
+direction = "CW"
